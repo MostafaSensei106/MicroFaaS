@@ -11,6 +11,7 @@ func AutoMigrate(db *gorm.DB) error {
 	log.Println("Running PostgreSQL Auto-Migrations...")
 
 	err := db.AutoMigrate(
+		&User{},
 		&Function{},
 		&Execution{},
 	)
