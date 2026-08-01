@@ -11,6 +11,7 @@ import (
 type FunctionStatus string
 
 const (
+	FunctionStatusReady     FunctionStatus = "ready"
 	FunctionStatusPending   FunctionStatus = "pending"
 	FunctionStatusBuilding  FunctionStatus = "building"
 	FunctionStatusDeploying FunctionStatus = "deploying"
@@ -24,7 +25,7 @@ type Function struct {
 	Name           string         `gorm:"type:varchar(100);uniqueIndex;not null" json:"name"`
 	Runtime        string         `gorm:"type:varchar(50);not null" json:"runtime"`
 	ImageTag       string         `gorm:"type:varchar(255)" json:"image_tag"`
-	EnvVars        datatypes.JSON `gorm:"type:jsonb" json:"env_vars"`
+	EnvVars        datatypes.JSON `gorm:"type:json" json:"env_vars"`
 	TimeoutSeconds int            `gorm:"default:30" json:"timeout_seconds"`
 	MemoryLimitMB  int            `gorm:"default:128" json:"memory_limit_mb"`
 	Status         FunctionStatus `gorm:"type:varchar(20);default:'PENDING'" json:"status"`

@@ -12,7 +12,7 @@ import (
 )
 
 func registerTestRunRoutes(router *gin.Engine, dockerMgr *container.DockerManager, cfg *config.Config) {
-	testRunGroup := router.Group("v1/test-run")
+	testRunGroup := router.Group("api/v1/test-run")
 	{
 		testRunGroup.POST("", func(c *gin.Context) {
 			result := dockerMgr.RunFunction(

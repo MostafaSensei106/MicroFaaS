@@ -3,7 +3,7 @@ package v1
 import "github.com/gin-gonic/gin"
 
 func registerAuthRoutes(router *gin.Engine) {
-	authGroup := router.Group("v1/auth")
+	authGroup := router.Group("api/v1/auth")
 	{
 		//login
 		authGroup.POST("/login", func(c *gin.Context) {

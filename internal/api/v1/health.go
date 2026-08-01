@@ -8,7 +8,7 @@ import (
 )
 
 func registerHealthCheckRoutes(router *gin.Engine) {
-	healthGroup := router.Group("v1/health")
+	healthGroup := router.Group("api/v1/health")
 	{
 		healthGroup.GET("/", func(c *gin.Context) {
 			delivery.NewResponser(c).Status(http.StatusOK).WithData(struct {
