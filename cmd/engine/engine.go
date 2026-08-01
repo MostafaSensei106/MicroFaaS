@@ -9,6 +9,7 @@ import (
 	"github.com/MostafaSensei106/Micro-FaaS/internal/db"
 	"github.com/MostafaSensei106/Micro-FaaS/internal/domain"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func startEngine() {
@@ -41,7 +42,7 @@ func startEngine() {
 	log.Println("Docker Manager initialized successfully.")
 
 	/// Setup Gin router
-	router := ginSetup(cfg, dockerMgr)
+	router := ginSetup(cfg, database, dockerMgr)
 
 	/// Start the server
 	serverAddress := ":" + cfg.Server.Port
@@ -52,10 +53,10 @@ func startEngine() {
 
 }
 
-func ginSetup(cfg *config.Config, dockerMgr *container.DockerManager) *gin.Engine {
+func ginSetup(cfg *config.Config, db *gorm.DB, dockerMgr *container.DockerManager) *gin.Engine {
 	gin.SetMode(cfg.Server.Mode)
 	router := gin.Default()
-	v1.SetupRoutes(router, dockerMgr, cfg)
+	v1.SetupRoutes(router, db, dockerMgr, cfg)
 
 	return router
 }
