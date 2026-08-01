@@ -44,7 +44,7 @@ func (h *Handler) CreateFunctionHandler(c *gin.Context) {
 		Runtime:        req.Runtime,
 		ImageTag:       req.ImageTag,
 		EnvVars:        datatypes.JSON(envVarsJSON),
-		TimeoutSeconds: req.TimeoutSec,
+		TimeoutSeconds: req.TimeoutSeconds,
 		MemoryLimitMB:  req.MemoryLimitMB,
 		Status:         domain.FunctionStatusReady,
 	}
@@ -65,7 +65,7 @@ func (h *Handler) CreateFunctionHandler(c *gin.Context) {
 			Runtime:       fn.Runtime,
 			ImageTag:      fn.ImageTag,
 			EnvVars:       req.EnvVars,
-			TimeoutSec:    req.TimeoutSec,
+			TimeoutSec:    req.TimeoutSeconds,
 			MemoryLimitMB: req.MemoryLimitMB,
 			Status:        string(fn.Status),
 		},
