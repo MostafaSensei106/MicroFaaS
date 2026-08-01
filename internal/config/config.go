@@ -2,10 +2,14 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/viper"
 )
+
+const AppName = "myapp" // Change to your application name
 
 type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
@@ -38,14 +42,23 @@ type DockerConfig struct {
 func (d *DatabaseConfig) DSN() string {
 	return fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s Timestamptz=true",
-		d.Host, d.Port, d.User, d.Password, d.DBName, d.SSLMode)
+		d.Host, d.Port, d.User, d.Password, d.DBName, d.SSLMode,
+	)
 }
 
-func LoadConfig(path string) (*Config, error) {
-	viper.AddConfigPath(path)
+func LoadConfig() (*Config, error) {
+	configPath, err := getConfigPath()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := ensureDefaultConfig(configPath); err != nil {
+		return nil, err
+	}
+
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-
+	viper.AddConfigPath(configPath)
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
@@ -58,4 +71,54 @@ func LoadConfig(path string) (*Config, error) {
 	}
 
 	return &cfg, nil
+}
+
+func getConfigPath() (string, error) {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get config directory: %w", err)
+	}
+
+	path := filepath.Join(configDir, AppName)
+
+	if err := os.MkdirAll(path, 0o755); err != nil {
+		return "", fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	return path, nil
+}
+
+func ensureDefaultConfig(configDir string) error {
+	configFile := filepath.Join(configDir, "config.yaml")
+
+	if _, err := os.Stat(configFile); err == nil {
+		return nil // Config already exists
+	}
+
+	defaultConfig := `server:
+	port: "8080"
+	mode: "debug"
+  
+  database:
+	host: "localhost"
+	port: 5432
+	user: "root"
+	password: "root"
+	dbname: "MicroFaaS"
+	sslmode: "disable"
+	max_open_conns: 100
+	max_idle_conns: 10
+	max_lifetime: 1800
+  
+  docker:
+	network: "bridge"
+	timeout_seconds: 30
+  
+`
+
+	if err := os.WriteFile(configFile, []byte(defaultConfig), 0o644); err != nil {
+		return fmt.Errorf("failed to create default config: %w", err)
+	}
+
+	return nil
 }
