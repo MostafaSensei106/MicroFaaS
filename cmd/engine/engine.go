@@ -55,7 +55,8 @@ func startEngine() {
 
 func ginSetup(cfg *config.Config, db *gorm.DB, dockerMgr *container.DockerManager) *gin.Engine {
 	gin.SetMode(cfg.Server.Mode)
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Recovery())
 	v1.SetupRoutes(router, db, dockerMgr, cfg)
 
 	return router

@@ -49,7 +49,7 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		delivery.NewResponser(c).
 			Status(http.StatusBadRequest).
-			WithError("VALIDATION_ERROR", err.Error()).
+			WithError(http.StatusText(http.StatusBadRequest), err.Error()).
 			Send()
 		return
 	}
@@ -59,7 +59,7 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 	if err != nil {
 		delivery.NewResponser(c).
 			Status(http.StatusInternalServerError).
-			WithError("INTERNAL_ERROR", "Failed to query user").
+			WithError(http.StatusText(http.StatusInternalServerError), err.Error()).
 			Send()
 		return
 	}
@@ -67,7 +67,7 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 	if user == nil {
 		delivery.NewResponser(c).
 			Status(http.StatusUnauthorized).
-			WithError("AUTH_FAILED", "Invalid email or password").
+			WithError(http.StatusText(http.StatusUnauthorized), "Invalid email or password").
 			Send()
 		return
 	}
@@ -76,7 +76,7 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 	if !user.CheckPassword(req.Password) {
 		delivery.NewResponser(c).
 			Status(http.StatusUnauthorized).
-			WithError("AUTH_FAILED", "Invalid email or password").
+			WithError(http.StatusText(http.StatusUnauthorized), "Invalid email or password").
 			Send()
 		return
 	}
@@ -86,7 +86,7 @@ func (ah *AuthHandler) Login(c *gin.Context) {
 	if err != nil {
 		delivery.NewResponser(c).
 			Status(http.StatusInternalServerError).
-			WithError("TOKEN_ERROR", "Failed to generate authentication token").
+			WithError(http.StatusText(http.StatusInternalServerError), "Failed to generate authentication token: "+err.Error()).
 			Send()
 		return
 	}
@@ -116,7 +116,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		delivery.NewResponser(c).
 			Status(http.StatusBadRequest).
-			WithError("VALIDATION_ERROR", err.Error()).
+			WithError(http.StatusText(http.StatusBadRequest), err.Error()).
 			Send()
 		return
 	}
@@ -126,7 +126,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 	if err != nil {
 		delivery.NewResponser(c).
 			Status(http.StatusInternalServerError).
-			WithError("INTERNAL_ERROR", "Failed to check existing user").
+			WithError(http.StatusText(http.StatusInternalServerError), "Failed to check existing user").
 			Send()
 		return
 	}
@@ -134,7 +134,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 	if existing != nil {
 		delivery.NewResponser(c).
 			Status(http.StatusConflict).
-			WithError("EMAIL_EXISTS", "A user with this email already exists").
+			WithError(http.StatusText(http.StatusConflict), "A user with this email already exists").
 			Send()
 		return
 	}
@@ -156,7 +156,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 	if err := user.SetPassword(req.Password); err != nil {
 		delivery.NewResponser(c).
 			Status(http.StatusInternalServerError).
-			WithError("INTERNAL_ERROR", "Failed to process password").
+			WithError(http.StatusText(http.StatusInternalServerError), "Failed to process password").
 			Send()
 		return
 	}
@@ -164,7 +164,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 	if err := ah.userRepo.Create(user); err != nil {
 		delivery.NewResponser(c).
 			Status(http.StatusInternalServerError).
-			WithError("INTERNAL_ERROR", "Failed to create user account").
+			WithError(http.StatusText(http.StatusInternalServerError), "Failed to create user account").
 			Send()
 		return
 	}
@@ -174,7 +174,7 @@ func (ah *AuthHandler) Register(c *gin.Context) {
 	if err != nil {
 		delivery.NewResponser(c).
 			Status(http.StatusInternalServerError).
-			WithError("TOKEN_ERROR", "Account created but failed to generate token").
+			WithError(http.StatusText(http.StatusInternalServerError), "Account created but failed to generate token").
 			Send()
 		return
 	}
@@ -274,7 +274,7 @@ func (ah *AuthHandler) RegisterFcmToken(c *gin.Context) {
 	if err := ah.userRepo.UpdateFcmToken(userID.(string), req.Token); err != nil {
 		delivery.NewResponser(c).
 			Status(http.StatusInternalServerError).
-			WithError("INTERNAL_ERROR", "Failed to register FCM token").
+			WithError(http.StatusText(http.StatusInternalServerError), "Failed to register FCM token").
 			Send()
 		return
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	cont "github.com/moby/moby/api/types/container"
@@ -38,21 +39,25 @@ func NewDockerManager() (*DockerManager, error) {
 	return mgr, nil
 }
 
+var knownImages sync.Map // map[string]bool
+
 func (m *DockerManager) RunFunction(ctx context.Context, imageName string, envVars map[string]string, timeoutSeconds int, memoryLimitMB int, needsInternet bool) *ExecutionResult {
 	startTime := time.Now()
 
-	_, err := m.cli.ImageInspect(ctx, imageName)
-	if err != nil {
-
-		reader, pullErr := m.cli.ImagePull(ctx, imageName, client.ImagePullOptions{})
-		if pullErr != nil {
-			return &ExecutionResult{
-				StatusCode: http.StatusInternalServerError,
-				Error:      fmt.Errorf("failed to pull image %s: %w", imageName, pullErr),
+	if _, known := knownImages.Load(imageName); !known {
+		_, err := m.cli.ImageInspect(ctx, imageName)
+		if err != nil {
+			reader, pullErr := m.cli.ImagePull(ctx, imageName, client.ImagePullOptions{})
+			if pullErr != nil {
+				return &ExecutionResult{
+					StatusCode: http.StatusInternalServerError,
+					Error:      fmt.Errorf("failed to pull image %s: %w", imageName, pullErr),
+				}
 			}
+			io.Copy(io.Discard, reader)
+			reader.Close()
 		}
-		io.Copy(io.Discard, reader)
-		reader.Close()
+		knownImages.Store(imageName, true)
 	}
 
 	var env []string
@@ -104,14 +109,13 @@ func (m *DockerManager) RunFunction(ctx context.Context, imageName string, envVa
 	}
 	ContainerID := resp.ID
 
-	defer func() {
-		removeCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		_, errRemove := m.cli.ContainerRemove(removeCtx, ContainerID, client.ContainerRemoveOptions{Force: true, RemoveVolumes: true})
-		if errRemove != nil {
-			fmt.Printf("failed to remove container %s: %v\n", ContainerID, errRemove)
-		}
-	}()
+	defer func(cid string) {
+		go func() {
+			removeCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_, _ = m.cli.ContainerRemove(removeCtx, cid, client.ContainerRemoveOptions{Force: true, RemoveVolumes: true})
+		}()
+	}(ContainerID)
 
 	execCtx, cancel := context.WithTimeout(ctx, time.Duration(timeoutSeconds)*time.Second)
 	defer cancel()
