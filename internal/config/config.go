@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const AppName = "myapp" // Change to your application name
+const AppName = "MicroFaaS"
 
 type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
@@ -41,33 +41,38 @@ type DockerConfig struct {
 
 func (d *DatabaseConfig) DSN() string {
 	return fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s Timestamptz=true",
-		d.Host, d.Port, d.User, d.Password, d.DBName, d.SSLMode,
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s TimeZone=UTC",
+		d.Host,
+		d.Port,
+		d.User,
+		d.Password,
+		d.DBName,
+		d.SSLMode,
 	)
 }
-
 func LoadConfig() (*Config, error) {
-	configPath, err := getConfigPath()
+	configDir, err := getConfigPath()
 	if err != nil {
 		return nil, err
 	}
 
-	if err := ensureDefaultConfig(configPath); err != nil {
+	configFile := filepath.Join(configDir, "config.yaml")
+
+	if err := ensureDefaultConfig(configFile); err != nil {
 		return nil, err
 	}
 
-	viper.SetConfigName("config")
+	viper.SetConfigFile(configFile)
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(configPath)
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("error reading config file: %w", err)
+		return nil, fmt.Errorf("failed to read config: %w", err)
 	}
 
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
-		return nil, fmt.Errorf("error unmarshalling config: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
 	return &cfg, nil
@@ -79,41 +84,38 @@ func getConfigPath() (string, error) {
 		return "", fmt.Errorf("failed to get config directory: %w", err)
 	}
 
-	path := filepath.Join(configDir, AppName)
+	configDir = filepath.Join(configDir, AppName)
 
-	if err := os.MkdirAll(path, 0o755); err != nil {
+	if err := os.MkdirAll(configDir, 0o755); err != nil {
 		return "", fmt.Errorf("failed to create config directory: %w", err)
 	}
 
-	return path, nil
+	return configDir, nil
 }
 
-func ensureDefaultConfig(configDir string) error {
-	configFile := filepath.Join(configDir, "config.yaml")
-
+func ensureDefaultConfig(configFile string) error {
 	if _, err := os.Stat(configFile); err == nil {
-		return nil // Config already exists
+		return nil
 	}
 
 	defaultConfig := `server:
-	port: "8080"
-	mode: "debug"
-  
-  database:
-	host: "localhost"
-	port: 5432
-	user: "root"
-	password: "root"
-	dbname: "MicroFaaS"
-	sslmode: "disable"
-	max_open_conns: 100
-	max_idle_conns: 10
-	max_lifetime: 1800
-  
-  docker:
-	network: "bridge"
-	timeout_seconds: 30
-  
+  port: "8080"
+  mode: "debug"
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "root"
+  password: "root"
+  dbname: "MicroFaaS"
+  sslmode: "disable"
+  max_open_conns: 100
+  max_idle_conns: 10
+  max_lifetime: 1800s
+
+docker:
+  network: "bridge"
+  timeout_seconds: 30
 `
 
 	if err := os.WriteFile(configFile, []byte(defaultConfig), 0o644); err != nil {
