@@ -6,6 +6,7 @@ func registerFunctionsRoutes(r *gin.Engine, h *Handler) {
 	functionsGroup := r.Group("api/v1/functions")
 	{
 		functionsGroup.POST("", h.CreateFunctionHandler)
+		functionsGroup.GET("", h.ListFunctionsHandler)
 	}
 }
 

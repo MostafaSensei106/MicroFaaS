@@ -72,3 +72,14 @@ func (h *Handler) CreateFunctionHandler(c *gin.Context) {
 	).Send()
 
 }
+
+// ListFunctions - GET /api/v1/functions
+func (h *Handler) ListFunctionsHandler(c *gin.Context) {
+	var functions []domain.Function
+	if err := h.db.Find(&functions).Error; err != nil {
+		delivery.NewResponser(c).Status(http.StatusInternalServerError).WithError(http.StatusText(http.StatusInternalServerError), err.Error()).Send()
+		return
+	}
+
+	delivery.NewResponser(c).Status(http.StatusOK).WithData(functions).Send()
+}
