@@ -15,6 +15,7 @@ type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
 	Database DatabaseConfig `mapstructure:"database"`
 	Docker   DockerConfig   `mapstructure:"docker"`
+	JWT      JWTConfig      `mapstructure:"jwt"`
 }
 
 type ServerConfig struct {
@@ -37,6 +38,11 @@ type DatabaseConfig struct {
 type DockerConfig struct {
 	Network        string `mapstructure:"network"`
 	TimeoutSeconds int    `mapstructure:"timeout_seconds"`
+}
+
+type JWTConfig struct {
+	Secret          string `mapstructure:"secret"`
+	ExpirationHours int    `mapstructure:"expiration_hours"`
 }
 
 func (d *DatabaseConfig) DSN() string {
@@ -116,6 +122,10 @@ database:
 docker:
   network: "bridge"
   timeout_seconds: 30
+
+jwt:
+  secret: "microfaas-super-secret-key-change-in-production"
+  expiration_hours: 72
 `
 
 	if err := os.WriteFile(configFile, []byte(defaultConfig), 0o644); err != nil {

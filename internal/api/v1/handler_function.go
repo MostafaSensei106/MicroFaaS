@@ -83,3 +83,35 @@ func (h *Handler) ListFunctionsHandler(c *gin.Context) {
 
 	delivery.NewResponser(c).Status(http.StatusOK).WithData(functions).Send()
 }
+
+// GetFunctionByName - GET /api/v1/functions/:name
+func (h *Handler) GetFunctionByNameHandler(c *gin.Context) {
+	name := c.Param("name")
+	var fn domain.Function
+	if err := h.db.Where("name = ?", name).First(&fn).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			delivery.NewResponser(c).Status(http.StatusNotFound).WithError("NOT_FOUND", "Function not found").Send()
+			return
+		}
+		delivery.NewResponser(c).Status(http.StatusInternalServerError).WithError(http.StatusText(http.StatusInternalServerError), err.Error()).Send()
+		return
+	}
+
+	var envVars map[string]string
+	if len(fn.EnvVars) > 0 {
+		_ = json.Unmarshal(fn.EnvVars, &envVars)
+	}
+
+	delivery.NewResponser(c).Status(http.StatusOK).WithData(
+		FunctionResponse{
+			ID:            fn.ID,
+			Name:          fn.Name,
+			Runtime:       fn.Runtime,
+			ImageTag:      fn.ImageTag,
+			EnvVars:       envVars,
+			TimeoutSec:    fn.TimeoutSeconds,
+			MemoryLimitMB: fn.MemoryLimitMB,
+			Status:        string(fn.Status),
+		},
+	).Send()
+}

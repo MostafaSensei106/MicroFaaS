@@ -7,6 +7,7 @@ func registerFunctionsRoutes(r *gin.Engine, h *Handler) {
 	{
 		functionsGroup.POST("", h.CreateFunctionHandler)
 		functionsGroup.GET("", h.ListFunctionsHandler)
+		functionsGroup.GET("/:name", h.GetFunctionByNameHandler)
 	}
 }
 
