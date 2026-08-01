@@ -16,11 +16,11 @@ const (
 )
 
 type Execution struct {
-	ID         uuid.UUID       `gorm:"type:uuid;default:uuid_generate_v7();primaryKey" json:"id"`
-	FunctionID uuid.UUID       `gorm:"type:uuid;not null" json:"function_id"`
+	ID         uuid.UUID       `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	FunctionID uuid.UUID       `gorm:"type:uuid;index;not null" json:"function_id"`
 	Status     ExecutionStatus `gorm:"type:varchar(20);not null" json:"status"`
-	StatusCode int             `gorm:"type:int;not null" json:"status_code"`
-	DurationMs int64           `gorm:"type:bigint;not null" json:"duration_ms"`
+	StatusCode int             `json:"status_code"`
+	DurationMS int64           `json:"duration_ms"`
 	Logs       string          `gorm:"type:text" json:"logs"`
 	ExecutedAt time.Time       `gorm:"index" json:"executed_at"`
 }

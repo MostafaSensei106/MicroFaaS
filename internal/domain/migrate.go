@@ -8,10 +8,7 @@ import (
 )
 
 func AutoMigrate(db *gorm.DB) error {
-	log.Println("Running PostgreSql Auto-Migrations...")
-	if err := db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`).Error; err != nil {
-		return fmt.Errorf("failed to enable uuid-ossp extension: %w", err)
-	}
+	log.Println("Running PostgreSQL Auto-Migrations...")
 
 	err := db.AutoMigrate(
 		&Function{},

@@ -20,18 +20,19 @@ const (
 )
 
 type Function struct {
-	ID             uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v7();primaryKey" json:"id"`
-	Name           string         `gorm:"type:varchar(100);unique;not null" json:"name"`
+	ID             uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	Name           string         `gorm:"type:varchar(100);uniqueIndex;not null" json:"name"`
 	Runtime        string         `gorm:"type:varchar(50);not null" json:"runtime"`
-	ImageTag       string         `gorm:"type:varchar(100);not null" json:"image_tag"`
-	EnvVars        datatypes.JSON `gorm:"type:jsonb;default:'{}'" json:"env_vars"`
-	TimeoutSeconds int            `gorm:"type:int;default:30" json:"timeout_seconds"`
-	MemoryLimitMB  int            `gorm:"type:int;default:128" json:"memory_limit_mb"`
-	Status         FunctionStatus `gorm:"type:varchar(20);default:'pending'" json:"status"`
-	Executions     []Execution    `gorm:"foreignKey:FunctionID;constraint:OnDelete:CASCADE" json:"executions,omitempty"`
+	ImageTag       string         `gorm:"type:varchar(255)" json:"image_tag"`
+	EnvVars        datatypes.JSON `gorm:"type:jsonb" json:"env_vars"`
+	TimeoutSeconds int            `gorm:"default:30" json:"timeout_seconds"`
+	MemoryLimitMB  int            `gorm:"default:128" json:"memory_limit_mb"`
+	Status         FunctionStatus `gorm:"type:varchar(20);default:'PENDING'" json:"status"`
 
-	CreatedAt time.Time      `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	Executions []Execution `gorm:"foreignKey:FunctionID;constraint:OnDelete:CASCADE" json:"executions,omitempty"`
+
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
