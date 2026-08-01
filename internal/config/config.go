@@ -106,7 +106,7 @@ func ensureDefaultConfig(configFile string) error {
 
 	defaultConfig := `server:
   port: "8080"
-  mode: "debug"
+  mode: "release"
 
 database:
   host: "localhost"
