@@ -9,6 +9,7 @@ import (
 	"time"
 
 	cont "github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/client"
 )
 
@@ -29,10 +30,15 @@ func NewDockerManager() (*DockerManager, error) {
 		return nil, fmt.Errorf("failed to create docker client: %w", err)
 	}
 
-	return &DockerManager{cli: cli}, nil
+	mgr := &DockerManager{cli: cli}
+	if err := mgr.ensureFunctionNetwork(); err != nil {
+		return nil, fmt.Errorf("failed to ensure function network: %w", err)
+	}
+
+	return mgr, nil
 }
 
-func (m *DockerManager) RunFunction(ctx context.Context, imageName string, envVars map[string]string, timeoutSeconds int, memoryLimitMB int) *ExecutionResult {
+func (m *DockerManager) RunFunction(ctx context.Context, imageName string, envVars map[string]string, timeoutSeconds int, memoryLimitMB int, needsInternet bool) *ExecutionResult {
 	startTime := time.Now()
 
 	_, err := m.cli.ImageInspect(ctx, imageName)
@@ -56,22 +62,38 @@ func (m *DockerManager) RunFunction(ctx context.Context, imageName string, envVa
 
 	hostConfig := &cont.HostConfig{
 		Resources: cont.Resources{
-			Memory:   int64(memoryLimitMB * 1024 * 1024),
-			NanoCPUs: 1000000000, // 1 CPU
+			Memory:    int64(memoryLimitMB * 1024 * 1024),
+			NanoCPUs:  1000000000, // 1 CPU
+			PidsLimit: func() *int64 { v := int64(50); return &v }(),
 		},
-		AutoRemove: true,
+		AutoRemove:     true,
+		Runtime:        "runsc",
+		ReadonlyRootfs: true,
+		Tmpfs: map[string]string{
+			"/tmp": "rw,noexec,nosuid,size=65536k"},
+		CapDrop: []string{"ALL"},
+	}
+
+	var networkingConfig *network.NetworkingConfig
+	if needsInternet {
+		networkingConfig = &network.NetworkingConfig{
+			EndpointsConfig: map[string]*network.EndpointSettings{
+				FunctionsNetworkName: {},
+			},
+		}
 	}
 
 	containerConfig := &cont.Config{
-		Image: imageName,
-		Env:   env,
-		Cmd:   []string{"sh", "-c", "echo $MESSAGE"},
+		Image:           imageName,
+		Env:             env,
+		Cmd:             []string{"sh", "-c", "echo $MESSAGE"},
+		NetworkDisabled: !needsInternet,
 	}
 
 	resp, err := m.cli.ContainerCreate(ctx, client.ContainerCreateOptions{
 		Config:           containerConfig,
 		HostConfig:       hostConfig,
-		NetworkingConfig: nil,
+		NetworkingConfig: networkingConfig,
 		Name:             "",
 	})
 	if err != nil {

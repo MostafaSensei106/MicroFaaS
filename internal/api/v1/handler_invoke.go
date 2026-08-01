@@ -36,6 +36,7 @@ func (h *Handler) InvokeFunctionHandler(c *gin.Context) {
 		envVars,
 		fn.TimeoutSeconds,
 		fn.MemoryLimitMB,
+		fn.NeedsInternet,
 	)
 
 	status := domain.ExecutionStatusSuccess

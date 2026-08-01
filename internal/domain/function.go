@@ -28,6 +28,7 @@ type Function struct {
 	EnvVars        datatypes.JSON `gorm:"type:json" json:"env_vars"`
 	TimeoutSeconds int            `gorm:"default:30" json:"timeout_seconds"`
 	MemoryLimitMB  int            `gorm:"default:128" json:"memory_limit_mb"`
+	NeedsInternet  bool           `gorm:"default:false" json:"needs_internet"`
 	Status         FunctionStatus `gorm:"type:varchar(20);default:'PENDING'" json:"status"`
 
 	Executions []Execution `gorm:"foreignKey:FunctionID;constraint:OnDelete:CASCADE" json:"executions,omitempty"`

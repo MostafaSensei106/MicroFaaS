@@ -21,6 +21,7 @@ func registerTestRunRoutes(router *gin.Engine, dockerMgr *container.DockerManage
 				map[string]string{"MESSAGE": "Hello from Micro-FaaS Engine!"},
 				10,  // 10s Timeout
 				128, // 128MB RAM
+				false, // NeedsInternet
 			)
 			if result.Error != nil {
 				delivery.NewResponser(c).Status(http.StatusInternalServerError).WithError(http.StatusText(http.StatusInternalServerError), result.Error.Error()).Send()
