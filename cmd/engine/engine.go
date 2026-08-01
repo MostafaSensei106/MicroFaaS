@@ -6,6 +6,7 @@ import (
 	v1 "github.com/MostafaSensei106/Micro-FaaS/internal/api/v1"
 	"github.com/MostafaSensei106/Micro-FaaS/internal/config"
 	"github.com/MostafaSensei106/Micro-FaaS/internal/db"
+	"github.com/MostafaSensei106/Micro-FaaS/internal/domain"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,6 +26,11 @@ func startEngine() {
 	_ = database // Use the database connection as needed
 
 	log.Println("Database connection established successfully.")
+
+	/// Run database migrations
+	if err := domain.AutoMigrate(database); err != nil {
+		log.Fatalf("failed to run database migrations: %v", err)
+	}
 
 	/// Setup Gin router
 	router := ginSetup(cfg)
