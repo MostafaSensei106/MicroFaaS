@@ -65,6 +65,7 @@ func (m *DockerManager) RunFunction(ctx context.Context, imageName string, envVa
 	containerConfig := &cont.Config{
 		Image: imageName,
 		Env:   env,
+		Cmd:   []string{"sh", "-c", "echo $MESSAGE"},
 	}
 
 	resp, err := m.cli.ContainerCreate(ctx, client.ContainerCreateOptions{
@@ -136,4 +137,3 @@ func (m *DockerManager) RunFunction(ctx context.Context, imageName string, envVa
 		DurationMS: duration,
 	}
 }
-

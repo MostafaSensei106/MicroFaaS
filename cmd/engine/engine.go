@@ -5,6 +5,7 @@ import (
 
 	v1 "github.com/MostafaSensei106/Micro-FaaS/internal/api/v1"
 	"github.com/MostafaSensei106/Micro-FaaS/internal/config"
+	"github.com/MostafaSensei106/Micro-FaaS/internal/container"
 	"github.com/MostafaSensei106/Micro-FaaS/internal/db"
 	"github.com/MostafaSensei106/Micro-FaaS/internal/domain"
 	"github.com/gin-gonic/gin"
@@ -32,8 +33,15 @@ func startEngine() {
 		log.Fatalf("failed to run database migrations: %v", err)
 	}
 
+	/// Initialize Docker Manager
+	dockerMgr, err := container.NewDockerManager()
+	if err != nil {
+		log.Fatalf("failed to initialize Docker Manager: %v", err)
+	}
+	log.Println("Docker Manager initialized successfully.")
+
 	/// Setup Gin router
-	router := ginSetup(cfg)
+	router := ginSetup(cfg, dockerMgr)
 
 	/// Start the server
 	serverAddress := ":" + cfg.Server.Port
@@ -44,10 +52,10 @@ func startEngine() {
 
 }
 
-func ginSetup(cfg *config.Config) *gin.Engine {
+func ginSetup(cfg *config.Config, dockerMgr *container.DockerManager) *gin.Engine {
 	gin.SetMode(cfg.Server.Mode)
 	router := gin.Default()
-	v1.SetupRoutes(router)
+	v1.SetupRoutes(router, dockerMgr, cfg)
 
 	return router
 }
